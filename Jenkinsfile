@@ -8,15 +8,22 @@ pipeline {
             }
         }
 
-        stage('Build Docker') {
+        stage('Setup Python Environment') {
             steps {
-                sh 'docker build -t automation-demo .'
+                // Use bat instead of sh for Windows
+                bat '''
+                python --version
+                pip install --upgrade pip
+                pip install -r requirements.txt
+                '''
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh 'docker run --rm automation-demo'
+                bat '''
+                pytest tests/ --alluredir=reports/allure-results
+                '''
             }
         }
     }
