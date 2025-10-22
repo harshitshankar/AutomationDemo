@@ -10,11 +10,11 @@ pipeline {
 
         stage('Setup Python Environment') {
             steps {
-                // Use bat instead of sh for Windows
                 bat '''
-                python --version
-                pip install --upgrade pip
-                pip install -r requirements.txt
+                    echo Setting up Python environment...
+                    python --version
+                    python -m pip install --upgrade pip
+                    pip install -r requirements.txt
                 '''
             }
         }
@@ -22,15 +22,33 @@ pipeline {
         stage('Run Tests') {
             steps {
                 bat '''
-                pytest tests/ --alluredir=reports/allure-results
+                    echo Running Pytest automation tests...
+                    pytest tests/ --alluredir=reports/allure-results --html=reports/report.html --self-contained-html
+                '''
+            }
+        }
+
+        stage('Generate Allure Report') {
+            steps {
+                bat '''
+                    echo Generating Allure report...
+                    if exist reports\\allure-results (
+                        echo "Allure results found, generating report..."
+                    ) else (
+                        echo "No allure results found!"
+                    )
                 '''
             }
         }
     }
 
     post {
-        always {
-            archiveArtifacts artifacts: 'reports/allure-results/**', fingerprint: true
+        success {
+            archiveArtifacts artifacts: 'reports/**/*.*', fingerprint: true
+            echo "✅ Tests executed successfully. Artifacts archived."
+        }
+        failure {
+            echo "❌ Tests failed. Check logs for details."
         }
     }
 }
